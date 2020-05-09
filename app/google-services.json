@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "676977654909",
+    "firebase_url": "https://face-detection-8f243.firebaseio.com",
+    "project_id": "face-detection-8f243",
+    "storage_bucket": "face-detection-8f243.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:676977654909:android:84b09d0902fbe1825c4514",
+        "android_client_info": {
+          "package_name": "com.project.uber"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "676977654909-7cdo5kh32k877veca07bo38jhh4d6c6l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.project.uber",
+            "certificate_hash": "c5e976ef4c503f411a1aefebf363076f10e084f8"
+          }
+        },
+        {
+          "client_id": "676977654909-mndft805a8654083p2431j5ak0770f7l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCRLH0Az6NnPqZc9UBzxZ3EXLTF_oU007Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "676977654909-mndft805a8654083p2431j5ak0770f7l.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
