@@ -15,31 +15,22 @@
       },
       "oauth_client": [
         {
-          "client_id": "676977654909-7cdo5kh32k877veca07bo38jhh4d6c6l.apps.googleusercontent.com",
+          "client_id": "676977654909-g119o4k9b0ip0d96e21p40vid96dvkbt.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.project.uber",
             "certificate_hash": "c5e976ef4c503f411a1aefebf363076f10e084f8"
           }
-        },
-        {
-          "client_id": "676977654909-mndft805a8654083p2431j5ak0770f7l.apps.googleusercontent.com",
-          "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCRLH0Az6NnPqZc9UBzxZ3EXLTF_oU007Y"
+          "current_key": "AIzaSyBPJidVE1IJBWr0skHUJXpab_uvMDlGBAQ"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "676977654909-mndft805a8654083p2431j5ak0770f7l.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }

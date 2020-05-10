@@ -62,6 +62,8 @@ public class CustomerLoginActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if(!task.isSuccessful()) {
+                            // Проверка в случае ошибки
+                            // Objects.requireNonNull(task.getException()).printStackTrace();
                             Toast.makeText(CustomerLoginActivity.this, "Sing up error", Toast.LENGTH_SHORT).show();
                         } else {
                             String user_id = mAuth.getCurrentUser().getUid();
