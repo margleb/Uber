@@ -9,6 +9,10 @@ import androidx.fragment.app.FragmentActivity;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
+
+import com.firebase.geofire.GeoFire;
+import com.firebase.geofire.GeoLocation;
+import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationListener;
 import android.os.Bundle;
 import android.util.Log;
@@ -22,6 +26,10 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class DriverMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
@@ -54,10 +62,10 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
         mMap.setMyLocationEnabled(true);
 
-        // Add a marker in Sydney and move the camera
-        // LatLng sydney = new LatLng(-34, 151);
-        // mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        // mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+         // Add a marker in Sydney and move the camera
+//         LatLng sydney = new LatLng(-34, 151);
+//         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
+//         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
     }
 
 
@@ -75,8 +83,17 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         mLastLocation = location;
         LatLng latLng = new LatLng(location.getAltitude(), location.getLongitude());
         // перемещает камеру при изменении положения
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
+        // mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+        // mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
+
+
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        // получаем список доступных авто
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("driversAvailable");
+
+        GeoFire geoFire = new GeoFire(ref);
+        geoFire.setLocation(userId, new GeoLocation(location.getLatitude(), location.getLongitude()));
+
     }
 
     @Override
@@ -103,11 +120,22 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     }
 
     public void сheckPermissions() {
-        Log.d("CheckPermission", "Hello1");
         // Here, thisActivity is the current activity
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // Permission is not granted
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, MY_PERMISSIONS_FOR_GEO_LOCATION);
         }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        // получаем список доступных авто
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("driversAvailable");
+
+        GeoFire geoFire = new GeoFire(ref);
+        // при остановке приложения удалем id пользователя из базы данных
+        geoFire.removeLocation(userId);
     }
 }

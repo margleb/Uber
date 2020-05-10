@@ -18,6 +18,8 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.util.Objects;
+
 public class DriverLoginActivity extends AppCompatActivity {
     private EditText mEmail, mPassword;
     private Button mLogin, mRegistration;
@@ -60,6 +62,8 @@ public class DriverLoginActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if(!task.isSuccessful()) {
+                            // Проверка в случае ошибки
+                            // Objects.requireNonNull(task.getException()).printStackTrace();
                             Toast.makeText(DriverLoginActivity.this, "Sing up error", Toast.LENGTH_SHORT).show();
                         } else {
                             String user_id = mAuth.getCurrentUser().getUid();
