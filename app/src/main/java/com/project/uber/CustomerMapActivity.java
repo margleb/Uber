@@ -13,6 +13,8 @@ import android.location.Location;
 
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
+import com.firebase.geofire.GeoQuery;
+import com.firebase.geofire.GeoQueryEventListener;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationListener;
 import android.os.Bundle;
@@ -31,6 +33,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -80,6 +83,53 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                 pickupLocation = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
                 mMap.addMarker(new MarkerOptions().position(pickupLocation).title("Pickup Here"));
                 mRequest.setText("Getting your Driver...");
+
+                getClosestDriver();
+
+            }
+        });
+    }
+
+    private int radius = 1;
+    private Boolean driverFound = false;
+    private String driverFoundID;
+    private void getClosestDriver() {
+        DatabaseReference driverLocation = FirebaseDatabase.getInstance().getReference().child("driversAvailable");
+        GeoFire geoFire = new GeoFire(driverLocation);
+        GeoQuery geoQuery = geoFire.queryAtLocation(new GeoLocation(pickupLocation.latitude, pickupLocation.longitude), radius);
+        geoQuery.removeAllListeners();
+        geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
+            @Override
+            public void onKeyEntered(String key, GeoLocation location) {
+                if(!driverFound) {
+                    // если найден водитель
+                    driverFound = true;
+                    driverFoundID = key;
+                }
+            }
+
+            @Override
+            public void onKeyExited(String key) {
+
+            }
+
+            @Override
+            public void onKeyMoved(String key, GeoLocation location) {
+
+            }
+
+            @Override
+            public void onGeoQueryReady() {
+                // если водитель не найден, то увеличиваем радиус и вызываем рекрусивно функцию
+                if(!driverFound) {
+                    radius++;
+                    getClosestDriver();
+                }
+            }
+
+            @Override
+            public void onGeoQueryError(DatabaseError error) {
+
             }
         });
     }
