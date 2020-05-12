@@ -34,14 +34,16 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-public class DriverMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
+public class CustomerMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
     private GoogleMap mMap;
     GoogleApiClient mGoogleApiClient;
     Location mLastLocation;
     LocationRequest mLocationRequest;
 
-    private Button mLogout;
+    private Button mLogout, mRequest;
+
+    private LatLng pickupLocation;
 
     // permissions
     private static final int MY_PERMISSIONS_FOR_GEO_LOCATION = 1;
@@ -49,21 +51,35 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_driver_map);
+        setContentView(R.layout.activity_customer_map);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
         mLogout = (Button) findViewById(R.id.logout);
+        mRequest = (Button) findViewById(R.id.request);
         mLogout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 FirebaseAuth.getInstance().signOut();
-                Intent intent = new Intent(DriverMapActivity.this, MainActivity.class);
+                Intent intent = new Intent(CustomerMapActivity.this, MainActivity.class);
                 startActivity(intent);
                 finish();
                 return;
+            }
+        });
+        mRequest.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                DatabaseReference ref = FirebaseDatabase.getInstance().getReference("customerRequest");
+                GeoFire getFire = new GeoFire(ref);
+                getFire.setLocation(userId, new GeoLocation(mLastLocation.getLatitude(), mLastLocation.getLongitude()));
+                // marker to pickup
+                pickupLocation = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
+                mMap.addMarker(new MarkerOptions().position(pickupLocation).title("Pickup Here"));
+                mRequest.setText("Getting your Driver...");
             }
         });
     }
@@ -79,7 +95,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
         mMap.setMyLocationEnabled(true);
 
-         // Add a marker in Sydney and move the camera
+        // Add a marker in Sydney and move the camera
 //         LatLng sydney = new LatLng(-34, 151);
 //         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
 //         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
@@ -102,14 +118,6 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         // перемещает камеру при изменении положения
         // mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
         // mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
-
-
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        // получаем список доступных авто
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("driversAvailable");
-
-        GeoFire geoFire = new GeoFire(ref);
-        geoFire.setLocation(userId, new GeoLocation(location.getLatitude(), location.getLongitude()));
 
     }
 
@@ -147,12 +155,5 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     @Override
     protected void onStop() {
         super.onStop();
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        // получаем список доступных авто
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("driversAvailable");
-
-        GeoFire geoFire = new GeoFire(ref);
-        // при остановке приложения удалем id пользователя из базы данных
-        geoFire.removeLocation(userId);
     }
 }

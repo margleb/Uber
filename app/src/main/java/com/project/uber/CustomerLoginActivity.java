@@ -41,7 +41,7 @@ public class CustomerLoginActivity extends AppCompatActivity {
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 FirebaseUser user =  firebaseAuth.getCurrentUser(); // состояние об авторизации пользователя
                 if(user!=null) {
-                    Intent intent = new Intent(CustomerLoginActivity.this, MainActivity.class);
+                    Intent intent = new Intent(CustomerLoginActivity.this, CustomerMapActivity.class);
                     startActivity(intent);
                     finish();
                     return;
