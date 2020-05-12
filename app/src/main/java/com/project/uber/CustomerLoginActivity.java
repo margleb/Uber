@@ -36,7 +36,7 @@ public class CustomerLoginActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-        firebaseAuthListener = new FirebaseAuth.AuthStateListener() {
+        firebaseAuthListener =  new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 FirebaseUser user =  firebaseAuth.getCurrentUser(); // состояние об авторизации пользователя
@@ -86,6 +86,7 @@ public class CustomerLoginActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if(!task.isSuccessful()) {
+                            // Objects.requireNonNull(task.getException()).printStackTrace();
                             Toast.makeText(CustomerLoginActivity.this, "Sing in failed", Toast.LENGTH_SHORT).show();
                         }
                     }

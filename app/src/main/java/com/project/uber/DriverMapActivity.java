@@ -37,6 +37,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -57,7 +58,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_driver_map);
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+        // Добавляет менеджер поддержки фрагментов, когда карта загружана
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -79,13 +80,13 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
     private void getAssignedCustomer() {
         String driverId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DatabaseReference assignCustomerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverId);
-        assignCustomerRef.addValueEventListener(
-                new ValueEventListener() {
+        DatabaseReference assignCustomerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverId).child("customerRideId");
+        assignCustomerRef.addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                         if(dataSnapshot.exists()) {
-                            Map<String, Object> map = (Map<String, Object>) dataSnapshot.getValue();
+                            Map<String, Object> map = new HashMap<>();
+                            map.put("customerRideId", dataSnapshot.getValue());
                             if(map.get("customerRideId") != null) {
                                 customerId = map.get("customerRideId").toString();
                                 getAssignedCustomerPickupLocation();
@@ -102,8 +103,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
     private void getAssignedCustomerPickupLocation() {
         DatabaseReference assignCustomerPickupLocation = FirebaseDatabase.getInstance().getReference().child("customerRequest").child(customerId).child("l");
-        assignCustomerPickupLocation.addValueEventListener(
-                new ValueEventListener() {
+        assignCustomerPickupLocation.addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                         if(dataSnapshot.exists()) {
@@ -114,7 +114,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                                 locationLat = Double.parseDouble(map.get(0).toString());
                             }
                             if(map.get(1) != null) {
-                                locationLng = Double.parseDouble(map.get(0).toString());
+                                locationLng = Double.parseDouble(map.get(1).toString());
                             }
                             LatLng driverLatLng = new LatLng(locationLat, locationLng);
                             mMap.addMarker(new MarkerOptions().position(driverLatLng).title("pickup location"));
@@ -169,6 +169,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
             DatabaseReference refWoriking = FirebaseDatabase.getInstance().getReference("driversWorking");
             GeoFire geoFireAvailable = new GeoFire(refAvailable);
             GeoFire geoFireWorking = new GeoFire(refWoriking);
+            // определяет занята ли машина в соответствии с присутствием в ней сustomerRideId
             switch (customerId) {
                 case "":
                     geoFireWorking.removeLocation(userId);

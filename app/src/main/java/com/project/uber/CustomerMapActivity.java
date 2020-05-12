@@ -61,11 +61,12 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_customer_map);
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+        // Добавляет менеджер поддержки фрагментов, когда карта загружана
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        // Кнопка выхода и поска авто
         mLogout = (Button) findViewById(R.id.logout);
         mRequest = (Button) findViewById(R.id.request);
         mLogout.setOnClickListener(new View.OnClickListener() {
@@ -85,13 +86,12 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                 DatabaseReference ref = FirebaseDatabase.getInstance().getReference("customerRequest");
                 GeoFire getFire = new GeoFire(ref);
                 getFire.setLocation(userId, new GeoLocation(mLastLocation.getLatitude(), mLastLocation.getLongitude()));
-                // marker to pickup
+                // маркер, где подобрать клента
                 pickupLocation = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
                 mMap.addMarker(new MarkerOptions().position(pickupLocation).title("Pickup Here"));
                 mRequest.setText("Getting your Driver...");
-
+                // функция поиска ближайшего водителя
                 getClosestDriver();
-
             }
         });
     }
@@ -101,22 +101,23 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
     private String driverFoundID;
     private void getClosestDriver() {
         DatabaseReference driverLocation = FirebaseDatabase.getInstance().getReference().child("driversAvailable");
+        // 1. Получает из базы доступных водителей
         GeoFire geoFire = new GeoFire(driverLocation);
+        // 2. Ищет доступных водителей в радиусе, от указаного местоположения
         GeoQuery geoQuery = geoFire.queryAtLocation(new GeoLocation(pickupLocation.latitude, pickupLocation.longitude), radius);
         geoQuery.removeAllListeners();
         geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
             @Override
-            public void onKeyEntered(String key, GeoLocation location) {
+            public void onKeyEntered(String key, GeoLocation location) { // 3. Если водитель найден
                 if(!driverFound) {
-                    // если найден водитель
                     driverFound = true;
                     driverFoundID = key;
-
+                    // прибавляет к id водителя находящегося поблизости
                     DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID);
                     String customerId = FirebaseAuth.getInstance().getCurrentUser().getUid();
                     HashMap map = new HashMap();
                     map.put("customerRideId", customerId);
-                    // добавляет id клиента в родительский driver
+                    // добавлет id ближайшего клиента в Drivers
                     driverRef.updateChildren(map);
 
                     getDriverLocation();
@@ -131,7 +132,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                         if(dataSnapshot.exists()) {
-                            List<Object> map= (List<Object>) dataSnapshot.getValue();
+                            List<Object> map = (List<Object>) dataSnapshot.getValue();
                             double locationLat = 0;
                             double locationLng = 0;
                             mRequest.setText("Driver Found");
@@ -139,12 +140,23 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                                 locationLat = Double.parseDouble(map.get(0).toString());
                             }
                             if(map.get(1) != null) {
-                                locationLng = Double.parseDouble(map.get(0).toString());
+                                locationLng = Double.parseDouble(map.get(1).toString());
                             }
                             LatLng driverLatLng = new LatLng(locationLat, locationLng);
                             if(mDriverMarker != null) {
                                 mDriverMarker.remove();
                             }
+                            Location loc1 = new Location("");
+                            loc1.setLatitude(pickupLocation.latitude);
+                            loc1.setLongitude(pickupLocation.longitude);
+
+                            Location loc2 = new Location("");
+                            loc2.setLatitude(driverLatLng.latitude);
+                            loc2.setLongitude(driverLatLng.longitude);
+
+                            // высчитывает дистанцию до водителя
+                            float distance = loc1.distanceTo(loc2);
+                            mRequest.setText("Driver Found: " + String.valueOf(distance));
                             mDriverMarker = mMap.addMarker(new MarkerOptions().position(driverLatLng).title("your driver"));
                         }
                     }
@@ -212,12 +224,12 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
 
     @Override
     public void onLocationChanged(Location location) {
+        // при изменнеии положения присваивает новое расположение локали
         mLastLocation = location;
         LatLng latLng = new LatLng(location.getAltitude(), location.getLongitude());
         // перемещает камеру при изменении положения
         // mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
         // mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
-
     }
 
     @Override
