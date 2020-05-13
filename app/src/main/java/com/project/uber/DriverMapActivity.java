@@ -29,6 +29,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -91,6 +92,15 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                                 customerId = map.get("customerRideId").toString();
                                 getAssignedCustomerPickupLocation();
                             }
+                        } else {
+                            // при отмене запароса клиента
+                            customerId = "";
+                            if(pickupMarker != null) {
+                                if(assignedCustomerPickupLocationRefListener != null) {
+                                    assignCustomerPickupLocation.removeEventListener(assignedCustomerPickupLocationRefListener);
+                                }
+                                pickupMarker.remove();
+                            }
                         }
                     }
 
@@ -101,12 +111,15 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                 });
     }
 
+    Marker pickupMarker;
+    private DatabaseReference assignCustomerPickupLocation;
+    private ValueEventListener assignedCustomerPickupLocationRefListener;
     private void getAssignedCustomerPickupLocation() {
-        DatabaseReference assignCustomerPickupLocation = FirebaseDatabase.getInstance().getReference().child("customerRequest").child(customerId).child("l");
-        assignCustomerPickupLocation.addValueEventListener(new ValueEventListener() {
+        assignCustomerPickupLocation = FirebaseDatabase.getInstance().getReference().child("customerRequest").child(customerId).child("l");
+        assignedCustomerPickupLocationRefListener = assignCustomerPickupLocation.addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        if(dataSnapshot.exists()) {
+                        if(dataSnapshot.exists() && !customerId.equals("")) {
                             List<Object> map = (List<Object>) dataSnapshot.getValue();
                             double locationLat = 0;
                             double locationLng = 0;
@@ -117,7 +130,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                                 locationLng = Double.parseDouble(map.get(1).toString());
                             }
                             LatLng driverLatLng = new LatLng(locationLat, locationLng);
-                            mMap.addMarker(new MarkerOptions().position(driverLatLng).title("pickup location"));
+                            pickupMarker = mMap.addMarker(new MarkerOptions().position(driverLatLng).title("pickup location"));
                         }
                     }
 
@@ -138,11 +151,6 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         buildGoogleApiCLient();
 
         mMap.setMyLocationEnabled(true);
-
-         // Add a marker in Sydney and move the camera
-//         LatLng sydney = new LatLng(-34, 151);
-//         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-//         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
     }
 
 
