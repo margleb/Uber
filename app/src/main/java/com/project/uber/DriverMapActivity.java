@@ -52,6 +52,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
     private Button mLogout;
     private String customerId = "";
+    private Boolean isLoggingOut = false;
 
     // permissions
     private static final int MY_PERMISSIONS_FOR_GEO_LOCATION = 1;
@@ -69,6 +70,8 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         mLogout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                isLoggingOut = true;
+                disconnectDriver();
                 FirebaseAuth.getInstance().signOut();
                 Intent intent = new Intent(DriverMapActivity.this, MainActivity.class);
                 startActivity(intent);
@@ -166,7 +169,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
     @Override
     public void onLocationChanged(Location location) {
-        if(getApplicationContext() != null) {
+        if(getApplicationContext() != null && !isLoggingOut) {
             mLastLocation = location;
             LatLng latLng = new LatLng(location.getAltitude(), location.getLongitude());
             // перемещает камеру при изменении положения
@@ -223,9 +226,8 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         }
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
+
+    private void disconnectDriver() {
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         // получаем список доступных авто
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("driversAvailable");
@@ -233,5 +235,14 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         GeoFire geoFire = new GeoFire(ref);
         // при остановке приложения удалем id пользователя из базы данных
         geoFire.removeLocation(userId);
+    }
+
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if(!isLoggingOut) {
+            disconnectDriver();
+        }
     }
 }
