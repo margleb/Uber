@@ -51,7 +51,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
     Location mLastLocation;
     LocationRequest mLocationRequest;
 
-    private Button mLogout, mRequest;
+    private Button mLogout, mRequest, mSettings;
     private LatLng pickupLocation;
 
     private Boolean requestBol = false;
@@ -73,6 +73,8 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
         // Кнопка выхода и поска авто
         mLogout = (Button) findViewById(R.id.logout);
         mRequest = (Button) findViewById(R.id.request);
+        mSettings = (Button) findViewById(R.id.settings);
+
         mLogout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -120,6 +122,14 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                     // функция поиска ближайшего водителя
                     getClosestDriver();
                 }
+            }
+        });
+        mSettings.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(CustomerMapActivity.this, CustomerSettingsActivity.class);
+                startActivity(intent);
+                return;
             }
         });
     }
