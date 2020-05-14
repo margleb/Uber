@@ -23,6 +23,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -47,6 +49,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -68,9 +71,10 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
     private LinearLayout mDriverInfo;
     private ImageView mDriverProifleImage;
     private TextView mDriverName, mDriverPhone, mDriverCar;
+    private RadioGroup mRadioGroup;
 
 
-    private String destination;
+    private String destination, requestService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,6 +103,10 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
         mDriverName = (TextView) findViewById(R.id.driverName);
         mDriverPhone = (TextView) findViewById(R.id.driverPhone);
         mDriverCar = (TextView) findViewById(R.id.driverCar);
+
+        mRadioGroup = (RadioGroup) findViewById(R.id.radioGroup);
+        // устанавливаем значение по дефолту
+        mRadioGroup.check(R.id.UberX);
 
         // Кнопка выхода и поска авто
         mLogout = (Button) findViewById(R.id.logout);
@@ -146,6 +154,14 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                     mDriverProifleImage.setImageResource(R.mipmap.ic_default_user);
 
                 } else {
+
+                    int selectedId = mRadioGroup.getCheckedRadioButtonId();
+                    final RadioButton radioButton = (RadioButton) findViewById(selectedId);
+                    if(radioButton.getText() == null) {
+                        return;
+                    }
+                    requestService = radioButton.getText().toString();
+
                     requestBol = true;
                     String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
                     DatabaseReference ref = FirebaseDatabase.getInstance().getReference("customerRequest");
@@ -206,23 +222,40 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
             @Override
             public void onKeyEntered(String key, GeoLocation location) { // 3. Если водитель найден
                 if(!driverFound && requestBol) {
-                    driverFound = true;
-                    driverFoundID = key;
-                    // прибавляет к id водителя находящегося поблизости
-                    DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID).child("customerRequest");
-                    String customerId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                    HashMap map = new HashMap();
-                    map.put("customerRideId", customerId);
-                    map.put("destination", destination);
-                    // добавлет id ближайшего клиента в Drivers
-                    driverRef.updateChildren(map);
 
-                    getDriverLocation();
+                    DatabaseReference mCustomerDatabase = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(key);
+                    mCustomerDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            if(dataSnapshot.exists() && dataSnapshot.getChildrenCount()>0) {
+                                Map<String, Object> driverMap = (Map<String, Object>) dataSnapshot.getValue();
+                                if(driverFound) {
+                                    return;
+                                }
+                                if(driverMap.get("service").equals(requestService)) {
+                                    driverFound = true;
+                                    driverFoundID = dataSnapshot.getKey();
+                                    // прибавляет к id водителя находящегося поблизости
+                                    DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID).child("customerRequest");
+                                    String customerId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                                    HashMap map = new HashMap();
+                                    map.put("customerRideId", customerId);
+                                    map.put("destination", destination);
+                                    // добавлет id ближайшего клиента в Drivers
+                                    driverRef.updateChildren(map);
 
-                    getDriverInfo();
+                                    getDriverLocation();
+                                    getDriverInfo();
+                                    mRequest.setText("Loocking for Driver Location");
+                                }
+                            }
+                        }
 
-                    mRequest.setText("Loocking for Driver Location");
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
 
+                        }
+                    });
 
                 }
             }
