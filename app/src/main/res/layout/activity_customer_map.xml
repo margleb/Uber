@@ -13,17 +13,17 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
         <Button
-            android:layout_alignParentRight="true"
-            android:text="logout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/logout"/>
-        <Button
             android:layout_gravity="right"
             android:text="settings"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/settings" />
+        <Button
+            android:layout_alignParentRight="true"
+            android:text="logout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/logout"/>
         <androidx.cardview.widget.CardView
             android:layout_below="@+id/settings"
             android:layout_width="match_parent"
@@ -35,10 +35,55 @@
             android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment" />
         </androidx.cardview.widget.CardView>
     </RelativeLayout>
-    <Button
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="call uber"
         android:layout_gravity="bottom"
-        android:id="@+id/request" />
+        android:orientation="vertical">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/driverInfo"
+            android:layout_gravity="bottom"
+            android:orientation="horizontal"
+            android:background="@android:color/white"
+            android:visibility="gone">
+            <ImageView
+                android:layout_width="100sp"
+                android:layout_height="100sp"
+                android:id="@+id/driverProfileImage"
+                android:src="@mipmap/ic_default_user"
+                android:padding="20sp" />
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingLeft="40sp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/driverName"
+                    android:paddingBottom="10sp"
+                    android:paddingTop="20sp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/driverPhone"
+                    android:paddingBottom="10sp"
+                    android:paddingTop="20sp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/driverCar"
+                    android:paddingBottom="10sp"
+                    android:paddingTop="20sp"/>
+            </LinearLayout>
+        </LinearLayout>
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="call uber"
+            android:layout_gravity="bottom"
+            android:id="@+id/request" />
+    </LinearLayout>
 </FrameLayout>

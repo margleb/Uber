@@ -3,7 +3,6 @@ package com.project.uber;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
@@ -11,17 +10,20 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 
+import com.bumptech.glide.Glide;
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.GeoQuery;
 import com.firebase.geofire.GeoQueryEventListener;
 import com.google.android.gms.common.api.Status;
-import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationListener;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -49,6 +51,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CustomerMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
@@ -62,10 +65,10 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
     private Boolean requestBol = false;
     private Marker pickupmarker;
     SupportMapFragment mapFragment;
+    private LinearLayout mDriverInfo;
+    private ImageView mDriverProifleImage;
+    private TextView mDriverName, mDriverPhone, mDriverCar;
 
-
-    // permissions
-    private static final int MY_PERMISSIONS_FOR_GEO_LOCATION = 1;
 
     private String destination;
 
@@ -89,6 +92,13 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
         } else {
             mapFragment.getMapAsync(this);
         }
+
+
+        mDriverInfo = (LinearLayout) findViewById(R.id.driverInfo);
+        mDriverProifleImage = (ImageView) findViewById(R.id.driverProfileImage);
+        mDriverName = (TextView) findViewById(R.id.driverName);
+        mDriverPhone = (TextView) findViewById(R.id.driverPhone);
+        mDriverCar = (TextView) findViewById(R.id.driverCar);
 
         // Кнопка выхода и поска авто
         mLogout = (Button) findViewById(R.id.logout);
@@ -115,8 +125,8 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                     driverLicationRef.removeEventListener(driverLocationRefListener);
                     if(driverFoundID != null) {
                         // устанавливаем у элемента значение true, тем самым удаля дочерние
-                        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID);
-                        driverRef.setValue(true);
+                        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID).child("customerRequest");
+                        driverRef.removeValue();
                         driverFoundID = null;
                     }
                     driverFound = false;
@@ -129,6 +139,12 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                         pickupmarker.remove();
                     }
                     mRequest.setText("call uber");
+                    mDriverInfo.setVisibility(View.GONE);
+                    mDriverName.setText("");
+                    mDriverPhone.setText("");
+                    mDriverCar.setText("");
+                    mDriverProifleImage.setImageResource(R.mipmap.ic_default_user);
+
                 } else {
                     requestBol = true;
                     String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -202,7 +218,12 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                     driverRef.updateChildren(map);
 
                     getDriverLocation();
+
+                    getDriverInfo();
+
                     mRequest.setText("Loocking for Driver Location");
+
+
                 }
             }
 
@@ -279,9 +300,41 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                 }
             }
 
+
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
 
+            }
+        });
+    }
+
+
+    private void getDriverInfo() {
+        mDriverInfo.setVisibility(View.VISIBLE);
+        DatabaseReference mCustomerDatabase = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID);
+        mCustomerDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if(dataSnapshot.exists() && dataSnapshot.getChildrenCount()>0) {
+                    Map<String, Object> map = (Map<String, Object>) dataSnapshot.getValue();
+                    if(map.get("name")!=null) {
+                        mDriverName.setText(map.get("name").toString());
+                    }
+                    if(map.get("phone")!=null) {
+                        mDriverPhone.setText(map.get("phone").toString());
+                    }
+                    if(map.get("car")!=null) {
+                        mDriverCar.setText(map.get("car").toString());
+                    }
+                    if(map.get("profileImageUrl")!=null) {
+                        // кеширует url изображения и помещает его область изображений
+                        Glide.with(getApplication()).load(map.get("profileImageUrl").toString()).into(mDriverProifleImage);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
             }
         });
     }

@@ -54,7 +54,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     Location mLastLocation;
     LocationRequest mLocationRequest;
 
-    private Button mLogout;
+    private Button mLogout, mSettings;
     private String customerId = "";
     private Boolean isLoggingOut = false;
 
@@ -86,6 +86,8 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         mCustomerDestination = (TextView) findViewById(R.id.customerDestination);
 
         mLogout = (Button) findViewById(R.id.logout);
+        mSettings = (Button) findViewById(R.id.settings);
+
         mLogout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -95,6 +97,15 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                 Intent intent = new Intent(DriverMapActivity.this, MainActivity.class);
                 startActivity(intent);
                 finish();
+                return;
+            }
+        });
+
+        mSettings.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(DriverMapActivity.this, DriverSettingsActivity.class);
+                startActivity(intent);
                 return;
             }
         });
@@ -308,7 +319,6 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         // при остановке приложения удалем id пользователя из базы данных
         geoFire.removeLocation(userId);
     }
-
 
     final int LOCATION_REQUEST_CODE = 1;
     @Override
