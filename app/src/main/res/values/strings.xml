@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Uber</string>
     <string name="title_activity_driver_map">Map</string>
+    <string name="api_key">AIzaSyBPJidVE1IJBWr0skHUJXpab_uvMDlGBAQ</string>
 </resources>

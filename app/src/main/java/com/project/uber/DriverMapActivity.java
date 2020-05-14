@@ -63,7 +63,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
     private LinearLayout mCustomerInfo;
     private ImageView mCostomerProifleImage;
-    private TextView mCostumerName, mCustomerPhone;
+    private TextView mCostumerName, mCustomerPhone, mCustomerDestination;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +78,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         mCostomerProifleImage = (ImageView) findViewById(R.id.customerProfileImage);
         mCostumerName = (TextView) findViewById(R.id.customerName);
         mCustomerPhone = (TextView) findViewById(R.id.customerPhone);
+        mCustomerDestination = (TextView) findViewById(R.id.customerDestination);
 
         mLogout = (Button) findViewById(R.id.logout);
         mLogout.setOnClickListener(new View.OnClickListener() {
@@ -98,7 +99,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
     private void getAssignedCustomer() {
         String driverId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DatabaseReference assignCustomerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverId).child("customerRideId");
+        DatabaseReference assignCustomerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverId).child("customerRequest").child("customerRideId");
         assignCustomerRef.addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -109,6 +110,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                                 customerId = map.get("customerRideId").toString();
                                 getAssignedCustomerPickupLocation();
                                 getAssignedCustomerPickupInfo();
+                                getAssignedCustomerDestination();
                             }
                         } else {
                             // при отмене запароса клиента
@@ -122,6 +124,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                             mCustomerInfo.setVisibility(View.GONE);
                             mCostumerName.setText("");
                             mCustomerPhone.setText("");
+                            mCustomerDestination.setText("Destination: --");
                             mCostomerProifleImage.setImageResource(R.mipmap.ic_default_user);
                         }
                     }
@@ -131,6 +134,32 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
                     }
                 });
+    }
+
+    private void getAssignedCustomerDestination() {
+        String driverId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference assignCustomerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverId).child("customerRequest").child("destination");
+        assignCustomerRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if(dataSnapshot.exists()) {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("customerRideId", dataSnapshot.getValue());
+                    if(map.get("customerRideId") != null) {
+                        String destination = map.get("customerRideId").toString();
+                        mCustomerDestination.setText("Destination: " + destination);
+                    }
+                } else {
+                    // вызывается, если пользователь вызвал uber, но не указал куда ехать
+                    mCustomerDestination.setText("Destination: --");
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
     }
 
     private void getAssignedCustomerPickupInfo() {
