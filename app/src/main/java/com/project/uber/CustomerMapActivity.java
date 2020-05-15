@@ -74,6 +74,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
 
 
     private String destination, requestService;
+    private LatLng destinationLatLng;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,6 +97,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
             mapFragment.getMapAsync(this);
         }
 
+        destinationLatLng = new LatLng(0.0, 0.0);
 
         mDriverInfo = (LinearLayout) findViewById(R.id.driverInfo);
         mDriverProifleImage = (ImageView) findViewById(R.id.driverProfileImage);
@@ -126,32 +128,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
             @Override
             public void onClick(View v) {
                 if(requestBol) {
-                    // при нажатии кнопки отмена вызова uber
-                    requestBol = false;
-                    geoQuery.removeAllListeners();
-                    driverLicationRef.removeEventListener(driverLocationRefListener);
-                    if(driverFoundID != null) {
-                        // устанавливаем у элемента значение true, тем самым удаля дочерние
-                        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID).child("customerRequest");
-                        driverRef.removeValue();
-                        driverFoundID = null;
-                    }
-                    driverFound = false;
-                    radius = 1;
-                    String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                    DatabaseReference ref = FirebaseDatabase.getInstance().getReference("customerRequest");
-                    GeoFire getFire = new GeoFire(ref);
-                    getFire.removeLocation(userId);
-                    if(pickupmarker != null) {
-                        pickupmarker.remove();
-                    }
-                    mRequest.setText("call uber");
-                    mDriverInfo.setVisibility(View.GONE);
-                    mDriverName.setText("");
-                    mDriverPhone.setText("");
-                    mDriverCar.setText("");
-                    mDriverProifleImage.setImageResource(R.mipmap.ic_default_user);
-
+                    endRide();
                 } else {
 
                     int selectedId = mRadioGroup.getCheckedRadioButtonId();
@@ -189,7 +166,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                 getSupportFragmentManager().findFragmentById(R.id.autocomplete_fragment);
 
         // Определяем тип данных для возращения
-        autocompleteFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME));
+        autocompleteFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME, Place.Field.LAT_LNG));
 
         // Устанавливаем слушаетель события для возращения ответа
         autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
@@ -197,6 +174,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
             public void onPlaceSelected(Place place) {
                 // Получаем информацию о выбраном месте
                 destination = place.getName();
+                destinationLatLng = place.getLatLng();
             }
 
             @Override
@@ -221,7 +199,6 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
             @Override
             public void onKeyEntered(String key, GeoLocation location) { // 3. Если водитель найден
                 if(!driverFound && requestBol) {
-
                     DatabaseReference mCustomerDatabase = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(key);
                     mCustomerDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
@@ -240,11 +217,14 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                                     HashMap map = new HashMap();
                                     map.put("customerRideId", customerId);
                                     map.put("destination", destination);
+                                    map.put("destinationLat", destinationLatLng.latitude);
+                                    map.put("destinationLng", destinationLatLng.longitude);
                                     // добавлет id ближайшего клиента в Drivers
                                     driverRef.updateChildren(map);
 
                                     getDriverLocation();
                                     getDriverInfo();
+                                    getHasRideEnded();
                                     mRequest.setText("Loocking for Driver Location");
                                 }
                             }
@@ -255,7 +235,6 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
 
                         }
                     });
-
                 }
             }
 
@@ -367,6 +346,82 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
+            }
+        });
+    }
+
+    private DatabaseReference driverHasEndedRef;
+    private ValueEventListener driveHasEndedRefListener;
+    private void getHasRideEnded() {
+        driverHasEndedRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID).child("customerRequest").child("customerRideId");
+        driveHasEndedRefListener = driverHasEndedRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("customerRideId", dataSnapshot.getValue());
+                    if (map.get("customerRideId") != null) {
+
+                    }
+                } else {
+                    // при отмене поездки водителем
+                    endRide();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    private void endRide() {
+        // при нажатии кнопки отмена вызова uber
+        requestBol = false;
+        geoQuery.removeAllListeners();
+        driverLicationRef.removeEventListener(driverLocationRefListener);
+        driverHasEndedRef.removeEventListener(driveHasEndedRefListener);
+        if(driverFoundID != null) {
+            // устанавливаем у элемента значение true, тем самым удаля дочерние
+            DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID).child("customerRequest");
+            driverRef.removeValue();
+            driverFoundID = null;
+        }
+        driverFound = false;
+        radius = 1;
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("customerRequest");
+        GeoFire getFire = new GeoFire(ref);
+        getFire.removeLocation(userId);
+        if(pickupmarker != null) {
+            pickupmarker.remove();
+        }
+        mRequest.setText("call uber");
+        mDriverInfo.setVisibility(View.GONE);
+        mDriverName.setText("");
+        mDriverPhone.setText("");
+        mDriverCar.setText("");
+        mDriverProifleImage.setImageResource(R.mipmap.ic_default_user);
+    }
+
+    private DatabaseReference driveHasEndedRef;
+    private ValueEventListener getDriveHasEndedRefListener;
+    private void getHasRideEndeded() {
+        driveHasEndedRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID).child("customerRequest").child("customerRideId");
+        getDriveHasEndedRefListener = driveHasEndedRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+
+                } else {
+                    endRide();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
             }
         });
     }

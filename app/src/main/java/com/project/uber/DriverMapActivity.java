@@ -61,8 +61,13 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     Location mLastLocation;
     LocationRequest mLocationRequest;
 
-    private Button mLogout, mSettings;
-    private String customerId = "";
+    private Button mLogout, mSettings, mRideStatus;
+
+    private int status = 0;
+
+    private String customerId = "", destionation;
+    private LatLng destionationLatLng;
+
     private Boolean isLoggingOut = false;
 
     private LinearLayout mCustomerInfo;
@@ -95,6 +100,25 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
         mLogout = (Button) findViewById(R.id.logout);
         mSettings = (Button) findViewById(R.id.settings);
+        mRideStatus = (Button) findViewById(R.id.rideStatus);
+        mRideStatus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                switch(status) {
+                    case 1:
+                        status=2;
+                        erasePolyLines();
+                        if(destionationLatLng.latitude!=0.0 && destionationLatLng.longitude!=0.0) {
+                            getRouteToMarker(destionationLatLng);
+                        }
+                        mRideStatus.setText("drive completed");
+                        break;
+                    case 2:
+                        endRide();
+                        break;
+                }
+            }
+        });
 
         mLogout.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -128,6 +152,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
+                    status = 1;
                     Map<String, Object> map = new HashMap<>();
                     map.put("customerRideId", dataSnapshot.getValue());
                     if (map.get("customerRideId") != null) {
@@ -137,20 +162,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                         getAssignedCustomerDestination();
                     }
                 } else {
-                    erasePolyLines();
-                    // при отмене запароса клиента
-                    customerId = "";
-                    if (pickupMarker != null) {
-                        if (assignedCustomerPickupLocationRefListener != null) {
-                            assignCustomerPickupLocation.removeEventListener(assignedCustomerPickupLocationRefListener);
-                        }
-                        pickupMarker.remove();
-                    }
-                    mCustomerInfo.setVisibility(View.GONE);
-                    mCostumerName.setText("");
-                    mCustomerPhone.setText("");
-                    mCustomerDestination.setText("Destination: --");
-                    mCostomerProifleImage.setImageResource(R.mipmap.ic_default_user);
+                    endRide();
                 }
             }
 
@@ -163,20 +175,29 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
     private void getAssignedCustomerDestination() {
         String driverId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DatabaseReference assignCustomerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverId).child("customerRequest").child("destination");
+        DatabaseReference assignCustomerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverId).child("customerRequest");
         assignCustomerRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("customerRideId", dataSnapshot.getValue());
-                    if (map.get("customerRideId") != null) {
-                        String destination = map.get("customerRideId").toString();
-                        mCustomerDestination.setText("Destination: " + destination);
+                    Map<String, Object> map = (Map<String, Object>) dataSnapshot.getValue();
+                    if(map.get("destination")!=null) {
+                        destionation = map.get("destination").toString();
+                        mCustomerDestination.setText("Destination: "  + destionation);
                     }
-                } else {
-                    // вызывается, если пользователь вызвал uber, но не указал куда ехать
-                    mCustomerDestination.setText("Destination: --");
+                    else {
+                        mCustomerDestination.setText("Destination --");
+                    }
+
+                    Double destinationLat = 0.0;
+                    Double destinationLng = 0.0;
+                    if(map.get("destinationLat") != null) {
+                        destinationLat = Double.valueOf(map.get("destinationLat").toString());
+                    }
+                    if(map.get("destinationLng") != null) {
+                        destinationLng = Double.valueOf(map.get("destinationLng").toString());
+                        destionationLatLng = new LatLng(destinationLat, destinationLng);
+                    }
                 }
             }
 
@@ -213,6 +234,8 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
             }
         });
     }
+
+
 
     Marker pickupMarker;
     private DatabaseReference assignCustomerPickupLocation;
@@ -254,6 +277,33 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                 .waypoints(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()), pickupLatLng)
                 .build();
         routing.execute();
+    }
+
+    private void endRide() {
+        // при нажатии кнопки отмена вызова uber
+        mRideStatus.setText("picked customer");
+        erasePolyLines();
+
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        // устанавливаем у элемента значение true, тем самым удаля дочерние
+        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(userId).child("customerRequest");
+        driverRef.removeValue();
+
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("customerRequest");
+        GeoFire getFire = new GeoFire(ref);
+        getFire.removeLocation(customerId);
+        customerId = "";
+        if(pickupMarker != null) {
+            pickupMarker.remove();
+        }
+        if (assignedCustomerPickupLocationRefListener != null) {
+            assignCustomerPickupLocation.removeEventListener(assignedCustomerPickupLocationRefListener);
+        }
+        mCustomerInfo.setVisibility(View.GONE);
+        mCostumerName.setText("");
+        mCustomerPhone.setText("");
+        mCustomerDestination.setText("Destination: --");
+        mCostomerProifleImage.setImageResource(R.mipmap.ic_default_user);
     }
 
     @Override
