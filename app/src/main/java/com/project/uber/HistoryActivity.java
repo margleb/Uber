@@ -6,6 +6,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
+import android.text.format.DateFormat;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -17,7 +18,9 @@ import com.project.uber.historyRecyclerView.HistoryAdapter;
 import com.project.uber.historyRecyclerView.HistoryObject;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 public class HistoryActivity extends AppCompatActivity {
     private RecyclerView mHistoryRecycleView;
@@ -71,7 +74,13 @@ public class HistoryActivity extends AppCompatActivity {
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if(dataSnapshot.exists()) {
                     String rideId = dataSnapshot.getKey();
-                    HistoryObject obj = new HistoryObject(rideId);
+                    Long timestamp = 0L;
+                    for(DataSnapshot child: dataSnapshot.getChildren()) {
+                        if(child.getKey().equals("timestamp")) {
+                            timestamp = Long.valueOf(child.getValue().toString());
+                        }
+                    }
+                    HistoryObject obj = new HistoryObject(rideId, getDate(timestamp));
                     resultHistory.add(obj);
                     mHistoryAdapter.notifyDataSetChanged();
                 }
@@ -84,6 +93,12 @@ public class HistoryActivity extends AppCompatActivity {
         });
     }
 
+    private String getDate(Long timestamp) {
+        Calendar cal = Calendar.getInstance(Locale.getDefault());
+        cal.setTimeInMillis(timestamp*10000);
+        String date = DateFormat.format("dd-MM-yyyy hh:mm", cal).toString();
+        return date;
+    }
 
     private ArrayList resultHistory = new ArrayList<HistoryObject>();
     private ArrayList<HistoryObject> getDataSetHistory() {

@@ -11,11 +11,13 @@ import com.project.uber.R;
 public class HistoryViewHilders extends RecyclerView.ViewHolder implements View.OnClickListener {
 
     public TextView rideId;
+    public TextView time;
 
     public HistoryViewHilders(@NonNull View itemView) {
         super(itemView);
         itemView.setOnClickListener(this);
         rideId = (TextView) itemView.findViewById(R.id.rideId);
+        time = (TextView) itemView.findViewById(R.id.time);
     }
 
     @Override
