@@ -15,10 +15,15 @@ import com.directions.route.Route;
 import com.directions.route.RouteException;
 import com.directions.route.Routing;
 import com.directions.route.RoutingListener;
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.firebase.auth.FirebaseAuth;
@@ -170,7 +175,6 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
     public void onRoutingFailure(RouteException e) {
         if (e != null) {
             Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            e.printStackTrace();
         } else {
             Toast.makeText(this, "Something went wrong, Try again", Toast.LENGTH_SHORT).show();
         }
@@ -186,6 +190,21 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
     private static final int[] COLORS = new int[]{R.color.primary_dark_material_light};
     @Override
     public void onRoutingSuccess(ArrayList<Route> route, int shorestRouteIndex) {
+
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        builder.include(pickupLatLng);
+        builder.include(destinationLatLng);
+        LatLngBounds bounds = builder.build();
+
+        int width = getResources().getDisplayMetrics().widthPixels;
+        int padding = (int) (width*0.2);
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+
+        mMap.animateCamera(cameraUpdate);
+
+        mMap.addMarker(new MarkerOptions().position(pickupLatLng).title("pickup location").icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_pickup)));
+        mMap.addMarker(new MarkerOptions().position(destinationLatLng).title("destination"));
+
         if (polylines.size() > 0) {
             for (Polyline poly : polylines) {
                 poly.remove();
