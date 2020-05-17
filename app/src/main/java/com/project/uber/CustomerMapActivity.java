@@ -25,6 +25,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -71,6 +72,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
     private ImageView mDriverProifleImage;
     private TextView mDriverName, mDriverPhone, mDriverCar;
     private RadioGroup mRadioGroup;
+    private RatingBar mRatingBar;
 
 
     private String destination, requestService;
@@ -104,6 +106,8 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
         mDriverName = (TextView) findViewById(R.id.driverName);
         mDriverPhone = (TextView) findViewById(R.id.driverPhone);
         mDriverCar = (TextView) findViewById(R.id.driverCar);
+
+        mRatingBar = (RatingBar) findViewById(R.id.ratingBar);
 
         mRadioGroup = (RadioGroup) findViewById(R.id.radioGroup);
         // устанавливаем значение по дефолту
@@ -351,6 +355,18 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
                     if(map.get("profileImageUrl")!=null) {
                         // кеширует url изображения и помещает его область изображений
                         Glide.with(getApplication()).load(map.get("profileImageUrl").toString()).into(mDriverProifleImage);
+                    }
+
+                    int ratingSum = 0;
+                    float ratingTotal = 0;
+                    float ratingAvg = 0;
+                    for(DataSnapshot child: dataSnapshot.child("rating").getChildren()) {
+                            ratingSum = ratingSum + Integer.valueOf(child.getValue().toString());
+                            ratingTotal++;
+                    }
+                    if(ratingTotal!=0) {
+                        ratingAvg = ratingSum/ratingTotal;
+                        mRatingBar.setRating(ratingAvg);
                     }
                 }
             }
