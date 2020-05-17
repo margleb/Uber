@@ -11,9 +11,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.project.uber.R;
 
 import java.util.ArrayList;
-import java.util.List;
 
-public class HistoryAdapter extends RecyclerView.Adapter<HistoryViewHilders> {
+public class HistoryAdapter extends RecyclerView.Adapter<HistoryViewHolders> {
     private ArrayList<HistoryObject> itemList;
     private Context context;
 
@@ -24,16 +23,16 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryViewHilders> {
 
     @NonNull
     @Override
-    public HistoryViewHilders onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public HistoryViewHolders onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View layoutView = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_history, null, false);
         RecyclerView.LayoutParams lp = new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         layoutView.setLayoutParams(lp);
-        HistoryViewHilders rcv = new HistoryViewHilders(layoutView);
+        HistoryViewHolders rcv = new HistoryViewHolders(layoutView);
         return rcv;
     }
 
     @Override
-    public void onBindViewHolder(@NonNull HistoryViewHilders holder, int position) {
+    public void onBindViewHolder(@NonNull HistoryViewHolders holder, int position) {
         holder.rideId.setText(itemList.get(position).getRideId());
         holder.time.setText(itemList.get(position).getTime());
     }

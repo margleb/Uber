@@ -241,6 +241,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     Marker pickupMarker;
     private DatabaseReference assignCustomerPickupLocation;
     private ValueEventListener assignedCustomerPickupLocationRefListener;
+    private LatLng pickupLatLng;
     private void getAssignedCustomerPickupLocation() {
         assignCustomerPickupLocation = FirebaseDatabase.getInstance().getReference().child("customerRequest").child(customerId).child("l");
         assignedCustomerPickupLocationRefListener = assignCustomerPickupLocation.addValueEventListener(new ValueEventListener() {
@@ -256,7 +257,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
                     if (map.get(1) != null) {
                         locationLng = Double.parseDouble(map.get(1).toString());
                     }
-                    LatLng pickupLatLng = new LatLng(locationLat, locationLng);
+                    pickupLatLng = new LatLng(locationLat, locationLng);
                     pickupMarker = mMap.addMarker(new MarkerOptions().position(pickupLatLng).title("pickup location").icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_pickup)));
                     getRouteToMarker(pickupLatLng);
                 }
@@ -294,6 +295,11 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         map.put("customer", customerId);
         map.put("rating", 0);
         map.put("timestamp", getCurrentTimestamp());
+        map.put("destination", destionation);
+        map.put("location/from/lat", pickupLatLng.latitude);
+        map.put("location/from/lng", pickupLatLng.longitude);
+        map.put("location/to/lat", destionationLatLng.latitude);
+        map.put("location/to/lng", destionationLatLng.longitude);
         historyRef.child(requestId).updateChildren(map);
     }
 
