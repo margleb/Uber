@@ -72,6 +72,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
     private String customerId = "", destionation;
     private LatLng destionationLatLng;
+    private float rideDistance;
 
     private Boolean isLoggingOut = false;
 
@@ -319,6 +320,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         map.put("location/from/lng", pickupLatLng.longitude);
         map.put("location/to/lat", destionationLatLng.latitude);
         map.put("location/to/lng", destionationLatLng.longitude);
+        map.put("distance", rideDistance);
         historyRef.child(requestId).updateChildren(map);
     }
 
@@ -342,6 +344,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         GeoFire getFire = new GeoFire(ref);
         getFire.removeLocation(customerId);
         customerId = "";
+        rideDistance = 0;
         if(pickupMarker != null) {
             pickupMarker.remove();
         }
@@ -381,6 +384,13 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     @Override
     public void onLocationChanged(Location location) {
         if (getApplicationContext() != null && !isLoggingOut && switch_status) {
+
+
+            if(!customerId.equals("")) {
+                // километры
+                rideDistance += mLastLocation.distanceTo(location)/1000;
+            }
+
             mLastLocation = location;
             LatLng latLng = new LatLng(location.getAltitude(), location.getLongitude());
             // перемещает камеру при изменении положения

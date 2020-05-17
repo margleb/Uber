@@ -3,6 +3,7 @@ package com.project.uber;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.text.format.DateFormat;
 import android.view.View;
@@ -55,6 +56,8 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
 
     private DatabaseReference historyRideInfoDb;
     private LatLng destinationLatLng, pickupLatLng;
+    private String distance;
+    private Double ridePrice;
 
     private GoogleMap mMap;
     private SupportMapFragment mMapFragment;
@@ -85,6 +88,7 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
 
     private void getRideInformation() {
         historyRideInfoDb.addListenerForSingleValueEvent(new ValueEventListener() {
+            @SuppressLint("SetTextI18n")
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if(dataSnapshot.exists()) {
@@ -110,6 +114,11 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
                         }
                         if(child.getKey().equals("rating")) {
                             mRatingBar.setRating(Integer.valueOf(child.getValue().toString()));
+                        }
+                        if(child.getKey().equals("distance")) {
+                           distance = child.getValue().toString();
+                           rideDistance.setText(distance.substring(0, Math.min(distance.length(), 5)) + " km");
+                           ridePrice = Double.valueOf(distance) * 0.5;
                         }
                         if(child.getKey().equals("destination")) {
                             rideLocation.setText(child.getValue().toString());
