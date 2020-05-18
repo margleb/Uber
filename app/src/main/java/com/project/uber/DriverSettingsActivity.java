@@ -17,6 +17,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -37,6 +38,7 @@ import com.google.firebase.storage.UploadTask;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.sql.Driver;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -102,7 +104,6 @@ public class DriverSettingsActivity extends AppCompatActivity {
                 Intent intent = new Intent(DriverSettingsActivity.this, DriverMapActivity.class);
                 startActivity(intent);
                 finish();
-                return;
             }
         });
     }
@@ -112,21 +113,24 @@ public class DriverSettingsActivity extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if(dataSnapshot.exists() && dataSnapshot.getChildrenCount()>0) {
-                    Map<String, Object> map = (Map<String, Object>) dataSnapshot.getValue();
-                    if(map.get("name")!=null) {
-                        mName = map.get("name").toString();
+                    Map<String, Object> driverSettingInfo = new HashMap<>();
+                    for(DataSnapshot item: dataSnapshot.getChildren()) {
+                        driverSettingInfo.put(item.getKey(), item.getValue());
+                    }
+                    if(driverSettingInfo.get("name")!=null) {
+                        mName = driverSettingInfo.get("name").toString();
                         mNameField.setText(mName);
                     }
-                    if(map.get("phone")!=null) {
-                        mPhone = map.get("phone").toString();
+                    if(driverSettingInfo.get("phone")!=null) {
+                        mPhone = driverSettingInfo.get("phone").toString();
                         mPhoneField.setText(mPhone);
                     }
-                    if(map.get("car")!=null) {
-                        mCar = map.get("car").toString();
+                    if(driverSettingInfo.get("car")!=null) {
+                        mCar = driverSettingInfo.get("car").toString();
                         mCarField.setText(mCar);
                     }
-                    if(map.get("service")!=null) {
-                        mService = map.get("service").toString();
+                    if(driverSettingInfo.get("service")!=null) {
+                        mService = driverSettingInfo.get("service").toString();
                         switch(mService) {
                             case "UberX":
                                 mRadioGroup.check(R.id.UberX);
@@ -139,8 +143,8 @@ public class DriverSettingsActivity extends AppCompatActivity {
                                 break;
                         }
                     }
-                    if(map.get("profileImageUrl")!=null) {
-                        mProfileImageUrl = map.get("profileImageUrl").toString();
+                    if(driverSettingInfo.get("profileImageUrl")!=null) {
+                        mProfileImageUrl = driverSettingInfo.get("profileImageUrl").toString();
                         // кеширует url изображения и помещает его область изображений
                         Glide.with(getApplication()).load(mProfileImageUrl).into(mProfileImage);
                     }
@@ -149,7 +153,7 @@ public class DriverSettingsActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-
+                Toast.makeText(DriverSettingsActivity.this, databaseError.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -192,19 +196,12 @@ public class DriverSettingsActivity extends AppCompatActivity {
             byte[] data = baos.toByteArray();
             UploadTask uploadTask = filePath.putBytes(data);
 
-            uploadTask.addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    finish();
-                    return;
-                }
-            });
 
             uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                @Override
+                    @Override
                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
 
-                    // Get a URL на згружаемый контент
+                    // Get a URL на загружаемый контент
                     StorageMetadata storageMetadata = taskSnapshot.getMetadata();
                     StorageReference storageReference = storageMetadata.getReference();
                     Task<Uri> taskUri = storageReference.getDownloadUrl();
@@ -212,22 +209,27 @@ public class DriverSettingsActivity extends AppCompatActivity {
                     taskUri.addOnCompleteListener(new OnCompleteListener<Uri>() {
                         @Override
                         public void onComplete(@NonNull Task<Uri> task) {
-                            // Uri downloadUri = task.getResult();
                             if(task.isSuccessful()) {
                                 Uri downloadUri = task.getResult();
                                 Map newImage = new HashMap();
                                 newImage.put("profileImageUrl", downloadUri.toString());
                                 mDriverDatabase.updateChildren(newImage);
                                 finish();
-                                return;
                             } else {
-                                // Task failed with an exception
                                 Exception exception = task.getException();
                             }
                         }
                     });
                 }
             });
+
+            uploadTask.addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    Toast.makeText(DriverSettingsActivity.this, e.getMessage(), Toast.LENGTH_SHORT);
+                }
+            });
+
         } else {
             finish();
         }

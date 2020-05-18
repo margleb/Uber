@@ -58,6 +58,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:visibility="gone"
             android:orientation="horizontal">
             <ImageView
                 android:id="@+id/customerProfileImage"
@@ -99,6 +100,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="picked customer"
+            android:visibility="gone"
             android:id="@+id/rideStatus" />
     </LinearLayout>
 </FrameLayout>

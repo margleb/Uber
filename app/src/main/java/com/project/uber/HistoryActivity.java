@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.text.format.DateFormat;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -22,7 +23,6 @@ import com.project.uber.historyRecyclerView.HistoryObject;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 import java.util.Locale;
 
 public class HistoryActivity extends AppCompatActivity {
@@ -30,31 +30,35 @@ public class HistoryActivity extends AppCompatActivity {
     private RecyclerView.Adapter mHistoryAdapter;
     private RecyclerView.LayoutManager mHistoryLayoutManager;
     private String customerOrDriver, userId;
-    private TextView mBalance;
-    private Double Balance = 0.0;
+    private TextView mbalance;
+    private Double balance = 0.0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_history);
 
-        mBalance = findViewById(R.id.balance);
+        mbalance = findViewById(R.id.balance);
 
-        mHistoryRecycleView = (RecyclerView) findViewById(R.id.historyRecyclerView);
-        mHistoryRecycleView.setNestedScrollingEnabled(false);
-        mHistoryRecycleView.setHasFixedSize(true);
+        mHistoryRecycleView = (findViewById(R.id.historyRecyclerView));
+        mHistoryRecycleView.setNestedScrollingEnabled(false); // плавный скролл
+        mHistoryRecycleView.setHasFixedSize(true); // дочерние элементы имеют фиксированную высоту и ширину
 
         mHistoryLayoutManager = new LinearLayoutManager(HistoryActivity.this);
-        mHistoryRecycleView.setLayoutManager(mHistoryLayoutManager);
-        mHistoryAdapter = new HistoryAdapter(getDataSetHistory(), HistoryActivity.this);
+        mHistoryRecycleView.setLayoutManager(mHistoryLayoutManager); // линейный слой
+        mHistoryAdapter = new HistoryAdapter(getDataSetHistory(), HistoryActivity.this); // адаптер recycle view
         mHistoryRecycleView.setAdapter(mHistoryAdapter);
 
-        customerOrDriver = getIntent().getExtras().getString("customerOrDriver");
+        customerOrDriver = getIntent().getExtras().getString("customerOrDriver"); // водитель или клиент
+
         userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
         getUserHistoryIds();
+
         if(customerOrDriver.equals("Drivers")) {
-            mBalance.setVisibility(View.VISIBLE);
+            mbalance.setVisibility(View.VISIBLE);
         }
+
     }
 
     private void getUserHistoryIds() {
@@ -64,11 +68,10 @@ public class HistoryActivity extends AppCompatActivity {
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if(dataSnapshot.exists()) {
                     for(DataSnapshot history: dataSnapshot.getChildren()) {
-                        FetchRideInformation(history.getKey());
+                        fetchRideInformation(history.getKey());
                     }
                 }
             }
-
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
 
@@ -77,13 +80,14 @@ public class HistoryActivity extends AppCompatActivity {
     }
 
 
-    private void FetchRideInformation(String ridekey) {
+    private void fetchRideInformation(String ridekey) {
         DatabaseReference historyDatabase = FirebaseDatabase.getInstance().getReference().child("history").child(ridekey);
         historyDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
             @SuppressLint("SetTextI18n")
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if(dataSnapshot.exists()) {
+                    
                     String rideId = dataSnapshot.getKey();
                     Long timestamp = 0L;
                     String distance = "";
@@ -93,24 +97,26 @@ public class HistoryActivity extends AppCompatActivity {
                             timestamp = Long.valueOf(dataSnapshot.child("timestamp").getValue().toString());
                         }
 
+                        // высчитывается текущий баланс водителя
                         if(dataSnapshot.child("customerPaid").getValue() != null && dataSnapshot.child("driverPaidOut").getValue() == null) {
                             if(dataSnapshot.child("distance").getValue() != null) {
                                  distance = dataSnapshot.child("distance").getValue().toString();
                                  ridePrice = (Double.valueOf(distance) * 0.4);
-                                 Balance += ridePrice;
-                                 mBalance.setText("Balance: " + String.valueOf(Balance) + " $");
+                                 balance += ridePrice;
+                                 mbalance.setText("balance: " + balance + " $");
                             }
                         }
 
                     HistoryObject obj = new HistoryObject(rideId, getDate(timestamp));
                     resultHistory.add(obj);
+                    // уведомляет адаптер об изменениях и подгружает новый список
                     mHistoryAdapter.notifyDataSetChanged();
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-
+                Toast.makeText(HistoryActivity.this, databaseError.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }

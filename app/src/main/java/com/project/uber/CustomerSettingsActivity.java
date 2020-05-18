@@ -15,6 +15,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -44,7 +45,7 @@ public class CustomerSettingsActivity extends AppCompatActivity {
 
     private ImageView mProfileImage;
 
-    private FirebaseAuth mAouth;
+    private FirebaseAuth mAuth;
     private DatabaseReference mCustomerDatabase;
 
     private String userID;
@@ -67,8 +68,8 @@ public class CustomerSettingsActivity extends AppCompatActivity {
         mBack = (Button) findViewById(R.id.back);
         mConfirm = (Button) findViewById(R.id.confirm);
 
-        mAouth = FirebaseAuth.getInstance();
-        userID = mAouth.getCurrentUser().getUid();
+        mAuth = FirebaseAuth.getInstance();
+        userID = mAuth.getCurrentUser().getUid();
         mCustomerDatabase = FirebaseDatabase.getInstance().getReference().child("Users").child("Customers").child(userID);
 
         getUserInfo();
@@ -81,7 +82,6 @@ public class CustomerSettingsActivity extends AppCompatActivity {
                 startActivityForResult(intent, 1);
             }
         });
-
         mConfirm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -102,17 +102,20 @@ public class CustomerSettingsActivity extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if(dataSnapshot.exists() && dataSnapshot.getChildrenCount()>0) {
-                    Map<String, Object> map = (Map<String, Object>) dataSnapshot.getValue();
-                    if(map.get("name")!=null) {
-                        mName = map.get("name").toString();
+                    Map<String, Object> customerSettingInfo = new HashMap<>();
+                    for(DataSnapshot item: dataSnapshot.getChildren()) {
+                        customerSettingInfo.put(item.getKey(), item.getValue());
+                    }
+                    if(customerSettingInfo.get("name")!=null) {
+                        mName = customerSettingInfo.get("name").toString();
                         mNameField.setText(mName);
                     }
-                    if(map.get("phone")!=null) {
-                        mPhone = map.get("phone").toString();
+                    if(customerSettingInfo.get("phone")!=null) {
+                        mPhone = customerSettingInfo.get("phone").toString();
                         mPhoneField.setText(mPhone);
                     }
-                    if(map.get("profileImageUrl")!=null) {
-                        mProfileImageUrl = map.get("profileImageUrl").toString();
+                    if(customerSettingInfo.get("profileImageUrl")!=null) {
+                        mProfileImageUrl = customerSettingInfo.get("profileImageUrl").toString();
                         // кеширует url изображения и помещает его область изображений
                         Glide.with(getApplication()).load(mProfileImageUrl).into(mProfileImage);
                     }
@@ -121,7 +124,7 @@ public class CustomerSettingsActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-
+                Toast.makeText(CustomerSettingsActivity.this, databaseError.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -178,9 +181,7 @@ public class CustomerSettingsActivity extends AppCompatActivity {
                                 newImage.put("profileImageUrl", downloadUri.toString());
                                 mCustomerDatabase.updateChildren(newImage);
                                 finish();
-                                return;
                             } else {
-                                // Task failed with an exception
                                 Exception exception = task.getException();
                             }
                         }
