@@ -20,13 +20,19 @@
             <Button
                 android:layout_weight="1"
                 android:text="logout"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:id="@+id/logout"/>
             <Button
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/history"
+                android:text="history" />
+            <Button
                 android:text="settings"
                 android:layout_weight="1"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
                 android:id="@+id/settings"/>

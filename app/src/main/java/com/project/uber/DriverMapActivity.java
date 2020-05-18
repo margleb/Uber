@@ -63,7 +63,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     Location mLastLocation;
     LocationRequest mLocationRequest;
 
-    private Button mLogout, mSettings, mRideStatus;
+    private Button mLogout, mSettings, mRideStatus, mHistory;;
 
     private Switch mWorkingSwitch;
     private boolean switch_status;
@@ -121,6 +121,8 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         mLogout = (Button) findViewById(R.id.logout);
         mSettings = (Button) findViewById(R.id.settings);
         mRideStatus = (Button) findViewById(R.id.rideStatus);
+        mHistory = (Button) findViewById(R.id.history);
+
         mRideStatus.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -158,6 +160,15 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(DriverMapActivity.this, DriverSettingsActivity.class);
+                startActivity(intent);
+                return;
+            }
+        });
+        mHistory.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(DriverMapActivity.this, HistoryActivity.class);
+                intent.putExtra("customerOrDriver", "Drivers");
                 startActivity(intent);
                 return;
             }
