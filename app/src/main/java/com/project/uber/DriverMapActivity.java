@@ -78,7 +78,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
 
     private FusedLocationProviderClient mFusedLocationClient;
 
-    private Button mLogout, mSettings, mRideStatus, mHistory;;
+    private Button mLogout, mSettings, mRideStatus, mHistory;
 
     private Switch mWorkingSwitch;
     private boolean switch_status;
